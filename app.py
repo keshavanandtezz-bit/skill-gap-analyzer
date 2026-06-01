@@ -127,9 +127,7 @@ st.caption("Upload a PDF **or** paste text for each section. If both are given, 
 
 col_left, col_right = st.columns(2, gap="large")
 
-# helper to process one side
 def process_side(pdf_file, text_input, label):
-    """Returns (final_text, word_count, source_label)"""
     if pdf_file is not None:
         try:
             text, pages = read_pdf(pdf_file)
@@ -144,47 +142,33 @@ def process_side(pdf_file, text_input, label):
         except Exception as e:
             st.markdown(f'<div class="error-box">❌ PDF error: {e}</div>', unsafe_allow_html=True)
             return "", 0
-
     if text_input.strip():
         wc = len(text_input.split())
         st.caption(f"📝 {wc:,} words")
         return text_input.strip(), wc
-
     return "", 0
 
-# ── LEFT: Resume ──────────────────────────────────────────────────────────────
 with col_left:
     st.markdown("#### 📄 Your Resume / CV")
     st.markdown("**📎 Upload PDF**")
-    resume_pdf = st.file_uploader(
-        "Upload Resume PDF", type=["pdf"], key="resume_pdf",
-        label_visibility="collapsed"
-    )
+    resume_pdf = st.file_uploader("Upload Resume PDF", type=["pdf"], key="resume_pdf", label_visibility="collapsed")
     st.markdown('<div class="or-row">OR PASTE TEXT BELOW</div>', unsafe_allow_html=True)
     st.markdown("**✏️ Paste Resume Text**")
-    resume_text = st.text_area(
-        "Resume text", height=180, key="resume_text",
+    resume_text = st.text_area("Resume text", height=180, key="resume_text",
         placeholder="Paste your resume content here if you don't have a PDF...",
-        label_visibility="collapsed"
-    )
-    resume_final, resume_wc = process_side(resume_pdf, resume_text, "Resume")
+        label_visibility="collapsed")
+    resume_final, _ = process_side(resume_pdf, resume_text, "Resume")
 
-# ── RIGHT: Job Description ────────────────────────────────────────────────────
 with col_right:
     st.markdown("#### 💼 Job Description")
     st.markdown("**📎 Upload PDF**")
-    job_pdf = st.file_uploader(
-        "Upload Job Description PDF", type=["pdf"], key="job_pdf",
-        label_visibility="collapsed"
-    )
+    job_pdf = st.file_uploader("Upload Job Description PDF", type=["pdf"], key="job_pdf", label_visibility="collapsed")
     st.markdown('<div class="or-row">OR PASTE TEXT BELOW</div>', unsafe_allow_html=True)
     st.markdown("**✏️ Paste Job Description Text**")
-    job_text = st.text_area(
-        "Job description text", height=180, key="job_text",
+    job_text = st.text_area("Job description text", height=180, key="job_text",
         placeholder="Paste the job description here if you don't have a PDF...",
-        label_visibility="collapsed"
-    )
-    job_final, job_wc = process_side(job_pdf, job_text, "Job Description")
+        label_visibility="collapsed")
+    job_final, _ = process_side(job_pdf, job_text, "Job Description")
 
 # ─────────────────────────────────────────────────────────────────────────────
 # ANALYZE BUTTON
@@ -210,21 +194,21 @@ if go:
 
     import charts as ch
 
-    score  = results["score"]
-    grade  = results["grade"]
-    clr    = "#00D4AA" if score >= 70 else ("#FFB347" if score >= 40 else "#FF5C7A")
+    score = results["score"]
+    grade = results["grade"]
+    clr   = "#00D4AA" if score >= 70 else ("#FFB347" if score >= 40 else "#FF5C7A")
 
     st.markdown('<div class="hdiv"></div>', unsafe_allow_html=True)
     st.markdown("### 📊 Step 2 — Your Results")
 
-    # ── Metrics ───────────────────────────────────────────────────────────────
+    # Metrics
     c1,c2,c3,c4,c5 = st.columns(5)
     for col, val, lbl, color in [
-        (c1, f"{score:.1f}%",               "Match Score",    clr),
-        (c2, grade,                          "Grade",          "#9D97FF"),
-        (c3, str(len(results["matched_skills"])), "✅ Matched",  "#00D4AA"),
-        (c4, str(len(results["missing_skills"])), "❌ Missing",  "#FF5C7A"),
-        (c5, str(len(results["extra_skills"])),   "⭐ Bonus",    "#9D97FF"),
+        (c1, f"{score:.1f}%",                        "Match Score", clr),
+        (c2, grade,                                   "Grade",       "#9D97FF"),
+        (c3, str(len(results["matched_skills"])),     "✅ Matched",  "#00D4AA"),
+        (c4, str(len(results["missing_skills"])),     "❌ Missing",  "#FF5C7A"),
+        (c5, str(len(results["extra_skills"])),       "⭐ Bonus",    "#9D97FF"),
     ]:
         with col:
             st.markdown(f"""
@@ -235,7 +219,7 @@ if go:
 
     st.markdown("<br>", unsafe_allow_html=True)
 
-    # ── Charts ────────────────────────────────────────────────────────────────
+    # Charts
     g1, g2 = st.columns(2)
     with g1:
         st.markdown("**🎯 Match Score**")
@@ -250,7 +234,7 @@ if go:
 
     st.markdown('<div class="hdiv"></div>', unsafe_allow_html=True)
 
-    # ── Skill Tags ────────────────────────────────────────────────────────────
+    # Skill Tags
     t1, t2, t3 = st.columns(3)
     with t1:
         st.markdown("**✅ Matched Skills**")
@@ -258,14 +242,12 @@ if go:
             st.markdown("".join(f'<span class="stag sm">{s.title()}</span>' for s in sorted(results["matched_skills"])), unsafe_allow_html=True)
         else:
             st.caption("None matched.")
-
     with t2:
         st.markdown("**❌ Missing Skills**")
         if results["missing_skills"]:
             st.markdown("".join(f'<span class="stag sx">{s.title()}</span>' for s in sorted(results["missing_skills"])), unsafe_allow_html=True)
         else:
             st.success("🎉 No skills missing!")
-
     with t3:
         st.markdown("**⭐ Bonus Skills**")
         if results["extra_skills"]:
@@ -273,7 +255,7 @@ if go:
         else:
             st.caption("None.")
 
-    # ── Category Charts ───────────────────────────────────────────────────────
+    # Category Charts
     if results["category_breakdown"]:
         st.markdown('<div class="hdiv"></div>', unsafe_allow_html=True)
         st.markdown("**📂 Category Breakdown**")
@@ -285,7 +267,7 @@ if go:
             if radar:
                 st.plotly_chart(radar, use_container_width=True)
 
-    # ── Learning Roadmap ──────────────────────────────────────────────────────
+    # Learning Roadmap
     if results["recommendations"]:
         st.markdown('<div class="hdiv"></div>', unsafe_allow_html=True)
         st.markdown("**📚 Your Learning Roadmap**")
